@@ -1,0 +1,488 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Planogram Compliance System</title>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 30px;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1250px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #16324f;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #16324f;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            margin-top: 22px;
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+        }
+
+        .planogram {
+            width: 100%;
+            max-width: 900px;
+            display: block;
+            margin: auto;
+            border-radius: 10px;
+        }
+
+        .upload {
+            text-align: center;
+        }
+
+        input,
+        select {
+            padding: 10px;
+            margin: 5px;
+        }
+
+        button {
+            padding: 13px 32px;
+            border: none;
+            border-radius: 8px;
+            background: #16324f;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #244f78;
+        }
+
+        .images {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+
+        .image-box {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .image-box img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th {
+            background: #16324f;
+            color: white;
+            padding: 12px;
+        }
+
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .correct {
+            color: #15803d;
+            font-weight: bold;
+        }
+
+        .missing {
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        .extra {
+            color: #d97706;
+            font-weight: bold;
+        }
+
+        .misplaced {
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        .scores {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .score {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px;
+            background: #edf3f8;
+            text-align: center;
+            border-radius: 12px;
+        }
+
+        .score-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #16324f;
+        }
+
+        .overall-status {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .compliant {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .attention {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .non-compliant {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .note {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <h1>Smart Planogram Compliance System</h1>
+
+
+    <!-- VISUAL PLANOGRAM -->
+
+    <div class="card">
+
+        <h2>Expected Visual Planogram</h2>
+
+        <img
+            class="planogram"
+            src="{{ url_for('static', filename='visual_planogram.png') }}"
+            alt="Expected Visual Planogram"
+        >
+
+    </div>
+
+
+    <!-- UPLOAD -->
+
+    <div class="card upload">
+
+        <h2>Upload Current Shelf Image</h2>
+
+        <p class="note">
+            Use Full Shelf Analysis for a complete front-facing shelf image.
+        </p>
+
+        <form
+            action="/analyze"
+            method="POST"
+            enctype="multipart/form-data"
+        >
+
+            <input
+                type="file"
+                name="image"
+                accept="image/*"
+                required
+            >
+
+            <br><br>
+
+            <label>
+                Analysis Type:
+            </label>
+
+            <select name="analysis_mode">
+
+                <option value="full">
+                    Full Shelf Analysis
+                </option>
+
+                <option value="detection">
+                    Product Detection Only
+                </option>
+
+            </select>
+
+            <br><br>
+
+            <button type="submit">
+                Analyze Shelf
+            </button>
+
+        </form>
+
+    </div>
+
+
+    {% if comparison %}
+
+
+    <!-- OVERALL STATUS -->
+
+    <div class="card">
+
+        {% if overall_score >= 90 %}
+
+            <div class="overall-status compliant">
+                ✓ Shelf Compliant
+            </div>
+
+        {% elif overall_score >= 70 %}
+
+            <div class="overall-status attention">
+                ⚠ Shelf Requires Attention
+            </div>
+
+        {% else %}
+
+            <div class="overall-status non-compliant">
+                ✗ Shelf Non-Compliant
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- IMAGES -->
+
+    <div class="card">
+
+        <h2>Shelf Analysis</h2>
+
+        <div class="images">
+
+            <div class="image-box">
+
+                <h3>Uploaded Shelf</h3>
+
+                <img
+                    src="{{ url_for('static', filename=uploaded_image) }}"
+                    alt="Uploaded Shelf"
+                >
+
+            </div>
+
+
+            <div class="image-box">
+
+                <h3>YOLOv8 Detection Result</h3>
+
+                <img
+                    src="{{ url_for('static', filename=result_image) }}"
+                    alt="YOLO Detection Result"
+                >
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- COMPARISON TABLE -->
+
+    <div class="card">
+
+        <h2>Planogram Comparison</h2>
+
+        <table>
+
+            <tr>
+                <th>Product</th>
+                <th>Expected</th>
+                <th>Detected</th>
+                <th>Quantity Status</th>
+                <th>Expected Position</th>
+                <th>Detected Position</th>
+                <th>Position Status</th>
+            </tr>
+
+
+            {% for row in comparison %}
+
+            <tr>
+
+                <td>
+                    <strong>{{ row.product }}</strong>
+                </td>
+
+                <td>
+                    {{ row.expected }}
+                </td>
+
+                <td>
+                    {{ row.detected }}
+                </td>
+
+
+                <!-- QUANTITY STATUS -->
+
+                <td>
+
+                    {% if row.quantity_status == "Correct" %}
+
+                        <span class="correct">
+                            ✓ Correct
+                        </span>
+
+                    {% elif "Missing" in row.quantity_status %}
+
+                        <span class="missing">
+                            ✗ {{ row.quantity_status }}
+                        </span>
+
+                    {% else %}
+
+                        <span class="extra">
+                            ⚠ {{ row.quantity_status }}
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+
+                <td>
+                    {{ row.expected_position }}
+                </td>
+
+                <td>
+                    {{ row.detected_positions }}
+                </td>
+
+
+                <!-- POSITION STATUS -->
+
+                <td>
+
+                    {% if row.position_status == "Correct" %}
+
+                        <span class="correct">
+                            ✓ Correct
+                        </span>
+
+                    {% elif row.position_status == "Not Evaluated" %}
+
+                        Not Evaluated
+
+                    {% else %}
+
+                        <span class="misplaced">
+                            ✗ {{ row.position_status }}
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </table>
+
+    </div>
+
+
+    <!-- SCORES -->
+
+    <div class="card">
+
+        <h2>Compliance Scores</h2>
+
+        <div class="scores">
+
+
+            <div class="score">
+
+                <h3>Quantity Compliance</h3>
+
+                <div class="score-value">
+                    {{ quantity_score }}%
+                </div>
+
+            </div>
+
+
+            {% if position_score is not none %}
+
+            <div class="score">
+
+                <h3>Position Compliance</h3>
+
+                <div class="score-value">
+                    {{ position_score }}%
+                </div>
+
+            </div>
+
+            {% endif %}
+
+
+            <div class="score">
+
+                <h3>Overall Compliance</h3>
+
+                <div class="score-value">
+                    {{ overall_score }}%
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    {% endif %}
+
+
+</div>
+
+</body>
+
+</html>
