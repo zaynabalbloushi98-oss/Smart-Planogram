@@ -1,0 +1,573 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Smart Planogram Results
+    </title>
+
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 30px;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1350px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #16324f;
+        }
+
+        h2 {
+            color: #16324f;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            margin-top: 22px;
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+        }
+
+        .back-button {
+            display: inline-block;
+            background: #16324f;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+
+        /* ==========================
+           REPLENISHMENT MESSAGE
+           ========================== */
+
+        .alert {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 6px solid #dc2626;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .alert-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .numbers {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .number-box {
+            background: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            min-width: 130px;
+        }
+
+        .number-box span {
+            display: block;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .number-box strong {
+            display: block;
+            font-size: 27px;
+            margin-top: 4px;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534;
+            padding: 20px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+
+        /* ==========================
+           IMAGES
+           ========================== */
+
+        .images {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .image-box img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            border-radius: 8px;
+        }
+
+
+        /* ==========================
+           TABLE
+           ========================== */
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        th {
+            background: #16324f;
+            color: white;
+            padding: 12px;
+        }
+
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .correct {
+            color: #15803d;
+            font-weight: bold;
+        }
+
+        .missing {
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        .extra {
+            color: #d97706;
+            font-weight: bold;
+        }
+
+
+        /* ==========================
+           SCORES
+           ========================== */
+
+        .scores {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .score {
+            background: #edf3f8;
+            padding: 22px;
+            text-align: center;
+            border-radius: 12px;
+        }
+
+        .score-value {
+            font-size: 34px;
+            color: #16324f;
+            font-weight: bold;
+        }
+
+
+        @media (max-width: 800px) {
+
+            body {
+                padding: 12px;
+            }
+
+            .images,
+            .scores {
+                grid-template-columns: 1fr;
+            }
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <a
+        href="/"
+        class="back-button"
+    >
+        ← Analyze Another Shelf
+    </a>
+
+
+    <h1>
+        Smart Planogram Analysis Result
+    </h1>
+
+
+    <!-- ==============================
+         REPLENISHMENT MESSAGES
+         ============================== -->
+
+    <div class="card">
+
+        <h2>
+            Shelf Replenishment Messages
+        </h2>
+
+
+        {% if messages %}
+
+
+            {% for message in messages %}
+
+
+                <div class="alert">
+
+                    <div class="alert-title">
+
+                        ⚠ Product Replenishment Required
+
+                    </div>
+
+
+                    {{ message }}
+
+
+                </div>
+
+
+            {% endfor %}
+
+
+        {% else %}
+
+
+            <div class="success">
+
+                ✅ All required front quantities are available.
+                No replenishment is required.
+
+            </div>
+
+
+        {% endif %}
+
+
+    </div>
+
+
+    <!-- ==============================
+         SHELF IMAGES
+         ============================== -->
+
+    <div class="card">
+
+        <h2>
+            Shelf Analysis
+        </h2>
+
+
+        <div class="images">
+
+
+            <div class="image-box">
+
+                <h3>
+                    Uploaded Shelf
+                </h3>
+
+                <img
+                    src="{{ url_for(
+                        'static',
+                        filename=original_image
+                    ) }}"
+                >
+
+            </div>
+
+
+            <div class="image-box">
+
+                <h3>
+                    Detection Result
+                </h3>
+
+                <img
+                    src="{{ url_for(
+                        'static',
+                        filename=result_image
+                    ) }}"
+                >
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+    <!-- ==============================
+         COMPARISON
+         ============================== -->
+
+    <div class="card">
+
+
+        <h2>
+            Planogram Comparison
+        </h2>
+
+
+        <div class="table-wrapper">
+
+
+            <table>
+
+
+                <tr>
+
+                    <th>
+                        Product
+                    </th>
+
+                    <th>
+                        Required
+                    </th>
+
+                    <th>
+                        Detected
+                    </th>
+
+                    <th>
+                        Missing
+                    </th>
+
+                    <th>
+                        Quantity Status
+                    </th>
+
+                    <th>
+                        Expected Position
+                    </th>
+
+                    <th>
+                        Detected Position
+                    </th>
+
+                    <th>
+                        Position Status
+                    </th>
+
+                </tr>
+
+
+                {% for row in results %}
+
+
+                <tr>
+
+
+                    <td>
+                        <strong>
+                            {{ row.product }}
+                        </strong>
+                    </td>
+
+
+                    <td>
+                        {{ row.expected_quantity }}
+                    </td>
+
+
+                    <td>
+                        {{ row.detected_quantity }}
+                    </td>
+
+
+                    <td>
+                        {{ row.missing_quantity }}
+                    </td>
+
+
+                    <td>
+
+
+                        {% if row.quantity_status == "Correct" %}
+
+                            <span class="correct">
+                                ✓ Correct
+                            </span>
+
+
+                        {% elif "Missing" in row.quantity_status %}
+
+                            <span class="missing">
+                                ✗ {{ row.quantity_status }}
+                            </span>
+
+
+                        {% else %}
+
+                            <span class="extra">
+                                ⚠ {{ row.quantity_status }}
+                            </span>
+
+
+                        {% endif %}
+
+
+                    </td>
+
+
+                    <td>
+                        {{ row.expected_position }}
+                    </td>
+
+
+                    <td>
+                        {{ row.detected_positions }}
+                    </td>
+
+
+                    <td>
+
+
+                        {% if row.position_status == "Correct" %}
+
+                            <span class="correct">
+                                ✓ Correct
+                            </span>
+
+
+                        {% else %}
+
+                            <span class="missing">
+                                ✗ {{ row.position_status }}
+                            </span>
+
+
+                        {% endif %}
+
+
+                    </td>
+
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </table>
+
+
+        </div>
+
+
+    </div>
+
+
+    <!-- ==============================
+         SCORES
+         ============================== -->
+
+    <div class="card">
+
+
+        <h2>
+            Compliance Scores
+        </h2>
+
+
+        <div class="scores">
+
+
+            <div class="score">
+
+                <h3>
+                    Quantity Compliance
+                </h3>
+
+                <div class="score-value">
+
+                    {{ quantity_compliance }}%
+
+                </div>
+
+            </div>
+
+
+            <div class="score">
+
+                <h3>
+                    Position Compliance
+                </h3>
+
+                <div class="score-value">
+
+                    {{ position_compliance }}%
+
+                </div>
+
+            </div>
+
+
+            <div class="score">
+
+                <h3>
+                    Overall Compliance
+                </h3>
+
+                <div class="score-value">
+
+                    {{ overall_compliance }}%
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+</body>
+
+</html>
