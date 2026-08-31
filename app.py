@@ -5,6 +5,7 @@ import numpy as np
 import onnxruntime as ort
 import os
 import uuid
+import hashlib
 
 app = Flask(__name__)
 
@@ -429,10 +430,15 @@ def analyze():
 
     file.save(original_path)
 
+    with open(original_path, "rb") as f:
+        image_hash = hashlib.sha256(f.read()).hexdigest()
+
+    print("=== IMAGE SHA256 ===", flush=True)
+    print(image_hash, flush=True)
+
     image = cv2.imread(original_path)
 
     if image is None:
-
         return "Unable to read uploaded image", 400
 
     # Detection
