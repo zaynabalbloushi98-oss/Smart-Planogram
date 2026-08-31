@@ -287,8 +287,6 @@ def build_planogram_from_detections(detections):
         }
 
     return dynamic_expected
-
-
 # ============================================================
 # PLANOGRAM COMPARISON
 # ============================================================
