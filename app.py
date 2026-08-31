@@ -438,12 +438,12 @@ def analyze():
 
     image = cv2.imread(original_path)
 
-if image is None:
+    if image is None:
     return "Unable to read uploaded image", 400
 
-height, width = image.shape[:2]
+    height, width = image.shape[:2]
 
-if width < 500 or height < 350:
+    if width < 500 or height < 350:
     return """
     <h2>Image quality is too low</h2>
     <p>Please upload a higher-resolution shelf image for accurate product detection.</p>
