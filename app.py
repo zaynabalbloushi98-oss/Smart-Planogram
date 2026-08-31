@@ -306,13 +306,13 @@ def build_planogram_from_detections(detections):
 # ============================================================
 # PLANOGRAM COMPARISON
 # ============================================================
-
-   def analyze_planogram(detections, expected_config=None):
-
-   if expected_config is None:
-   expected_config = EXPECTED
-
-   results = []
+def analyze_planogram(detections, expected_config=None):
+    
+    
+    
+    if expected_config is None:
+        expected_config = EXPECTED
+    results = []
 
    correct_quantity_products = 0
    correct_position_products = 0
