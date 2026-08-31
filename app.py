@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request
 import cv2
 import numpy as np
@@ -20,13 +19,8 @@ UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ============================================================
-# SMART PLANOGRAM SETTINGS
+# DEFAULT / FALLBACK PLANOGRAM
 # ============================================================
-
-# Expected arrangement:
-# LEFT   = Pepsi Zero Sugar
-# CENTER = Fanta Orange
-# RIGHT  = Red Bull
 
 EXPECTED = {
     "pepsi_zero_sugar": {
@@ -47,15 +41,25 @@ EXPECTED = {
 }
 
 # IMPORTANT:
-# These must match the class order used when training the YOLO model.
+# Must match the YOLO training class order.
 CLASS_NAMES = [
     "fanta_orange",
     "pepsi_zero_sugar",
     "redbull"
 ]
 
+DISPLAY_NAMES = {
+    "pepsi_zero_sugar": "Pepsi Zero Sugar",
+    "fanta_orange": "Fanta Orange",
+    "redbull": "Red Bull"
+}
+
 CONF_THRESHOLD = 0.50
 IOU_THRESHOLD = 0.45
+
+MIN_IMAGE_WIDTH = 500
+MIN_IMAGE_HEIGHT = 350
+
 
 # ============================================================
 # LOAD ONNX MODEL
@@ -68,8 +72,8 @@ session = ort.InferenceSession(
 
 input_name = session.get_inputs()[0].name
 
-print("ONNX model loaded successfully")
-print("Input:", input_name)
+print("ONNX model loaded successfully", flush=True)
+print("Input:", input_name, flush=True)
 
 
 # ============================================================
@@ -77,17 +81,12 @@ print("Input:", input_name)
 # ============================================================
 
 def preprocess_image(image, size=640):
-
     original_h, original_w = image.shape[:2]
 
     resized = cv2.resize(image, (size, size))
-
     img = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
-
     img = img.astype(np.float32) / 255.0
-
     img = np.transpose(img, (2, 0, 1))
-
     img = np.expand_dims(img, axis=0)
 
     return img, original_w, original_h
@@ -98,14 +97,12 @@ def preprocess_image(image, size=640):
 # ============================================================
 
 def nms(boxes, scores, threshold=0.45):
-
     if len(boxes) == 0:
         return []
 
     boxes_xywh = []
 
     for box in boxes:
-
         x1, y1, x2, y2 = box
 
         boxes_xywh.append([
@@ -129,11 +126,10 @@ def nms(boxes, scores, threshold=0.45):
 
 
 # ============================================================
-# DETECTION
+# PRODUCT DETECTION
 # ============================================================
 
 def detect_products(image):
-
     input_tensor, original_w, original_h = preprocess_image(image)
 
     outputs = session.run(
@@ -142,10 +138,6 @@ def detect_products(image):
     )
 
     predictions = outputs[0]
-
-    # YOLOv8 ONNX normally returns:
-    # (1, 4 + number_of_classes, 8400)
-
     predictions = np.squeeze(predictions)
 
     if predictions.shape[0] < predictions.shape[1]:
@@ -159,7 +151,6 @@ def detect_products(image):
     scale_y = original_h / 640
 
     for prediction in predictions:
-
         x, y, w, h = prediction[:4]
 
         class_scores = prediction[4:]
@@ -172,7 +163,6 @@ def detect_products(image):
 
         x1 = (x - w / 2) * scale_x
         y1 = (y - h / 2) * scale_y
-
         x2 = (x + w / 2) * scale_x
         y2 = (y + h / 2) * scale_y
 
@@ -186,12 +176,15 @@ def detect_products(image):
         scores.append(confidence)
         class_ids.append(class_id)
 
-    indexes = nms(boxes, scores, IOU_THRESHOLD)
+    indexes = nms(
+        boxes,
+        scores,
+        IOU_THRESHOLD
+    )
 
     detections = []
 
     for i in indexes:
-
         class_id = class_ids[i]
 
         if class_id >= len(CLASS_NAMES):
@@ -203,7 +196,6 @@ def detect_products(image):
 
         center_x = (x1 + x2) / 2
 
-        # Determine horizontal shelf zone
         if center_x < original_w / 3:
             zone = "left"
 
@@ -228,11 +220,9 @@ def detect_products(image):
 # ============================================================
 
 def draw_detections(image, detections):
-
     result = image.copy()
 
     for detection in detections:
-
         x1, y1, x2, y2 = detection["box"]
 
         product = detection["product"]
@@ -259,25 +249,20 @@ def draw_detections(image, detections):
         )
 
     return result
+
+
 # ============================================================
 # BUILD PLANOGRAM FROM UPLOADED IMAGE
 # ============================================================
 
 def build_planogram_from_detections(detections):
-
     dynamic_expected = {}
 
-    display_names = {
-        "pepsi_zero_sugar": "Pepsi Zero Sugar",
-        "fanta_orange": "Fanta Orange",
-        "redbull": "Red Bull"
-    }
-
     for product in CLASS_NAMES:
-
         product_detections = [
-            d for d in detections
-            if d["product"] == product
+            detection
+            for detection in detections
+            if detection["product"] == product
         ]
 
         if not product_detections:
@@ -286,10 +271,10 @@ def build_planogram_from_detections(detections):
         quantity = len(product_detections)
 
         positions = [
-            d["zone"] for d in product_detections
+            detection["zone"]
+            for detection in product_detections
         ]
 
-        # Use the most common detected zone as the expected position
         expected_position = max(
             set(positions),
             key=positions.count
@@ -298,42 +283,43 @@ def build_planogram_from_detections(detections):
         dynamic_expected[product] = {
             "quantity": quantity,
             "position": expected_position,
-            "display": display_names[product]
+            "display": DISPLAY_NAMES[product]
         }
 
     return dynamic_expected
 
+
 # ============================================================
 # PLANOGRAM COMPARISON
 # ============================================================
+
 def analyze_planogram(detections, expected_config=None):
-    
-    
-    
     if expected_config is None:
         expected_config = EXPECTED
+
     results = []
 
-   correct_quantity_products = 0
-   correct_position_products = 0
+    correct_quantity_products = 0
+    correct_position_products = 0
 
-   messages = []
+    messages = []
 
-   for product, expected_data in expected_config.items():
-
+    for product, expected_data in expected_config.items():
         expected_qty = expected_data["quantity"]
         expected_position = expected_data["position"]
         display_name = expected_data["display"]
 
         product_detections = [
-            d for d in detections
-            if d["product"] == product
+            detection
+            for detection in detections
+            if detection["product"] == product
         ]
 
         detected_qty = len(product_detections)
 
         detected_positions = [
-            d["zone"] for d in product_detections
+            detection["zone"]
+            for detection in product_detections
         ]
 
         # ----------------------------------------------------
@@ -341,15 +327,12 @@ def analyze_planogram(detections, expected_config=None):
         # ----------------------------------------------------
 
         if detected_qty == expected_qty:
-
             quantity_status = "Correct"
             missing_qty = 0
             correct_quantity_products += 1
 
         elif detected_qty < expected_qty:
-
             missing_qty = expected_qty - detected_qty
-
             quantity_status = f"Missing {missing_qty}"
 
             messages.append(
@@ -359,10 +342,8 @@ def analyze_planogram(detections, expected_config=None):
             )
 
         else:
-
             extra_qty = detected_qty - expected_qty
             missing_qty = 0
-
             quantity_status = f"Extra {extra_qty}"
 
         # ----------------------------------------------------
@@ -370,11 +351,9 @@ def analyze_planogram(detections, expected_config=None):
         # ----------------------------------------------------
 
         if detected_qty == 0:
-
             position_status = "Product Missing"
 
         else:
-
             misplaced = sum(
                 1
                 for position in detected_positions
@@ -382,32 +361,24 @@ def analyze_planogram(detections, expected_config=None):
             )
 
             if misplaced == 0:
-
                 position_status = "Correct"
                 correct_position_products += 1
 
             else:
-
                 position_status = f"Misplaced {misplaced}"
 
         results.append({
-
             "product": display_name,
-
             "expected_quantity": expected_qty,
-
             "detected_quantity": detected_qty,
-
             "quantity_status": quantity_status,
-
             "expected_position": expected_position.capitalize(),
-
-            "detected_positions":
+            "detected_positions": (
                 ", ".join(detected_positions)
-                if detected_positions else "-",
-
+                if detected_positions
+                else "-"
+            ),
             "position_status": position_status,
-
             "missing_quantity": missing_qty
         })
 
@@ -417,26 +388,31 @@ def analyze_planogram(detections, expected_config=None):
 
     total_products = len(expected_config)
 
-    quantity_compliance = (
-        correct_quantity_products / total_products
-    ) * 100
+    if total_products == 0:
+        quantity_compliance = 0
+        position_compliance = 0
+        overall_compliance = 0
 
-    position_compliance = (
-        correct_position_products / total_products
-    ) * 100
+    else:
+        quantity_compliance = (
+            correct_quantity_products / total_products
+        ) * 100
 
-    overall_compliance = (
-        quantity_compliance + position_compliance
-    ) / 2
+        position_compliance = (
+            correct_position_products / total_products
+        ) * 100
+
+        overall_compliance = (
+            quantity_compliance + position_compliance
+        ) / 2
 
     return (
-(
-    results,
-    messages,
-    quantity_compliance,
-    position_compliance,
-    overall_compliance
-) = analyze_planogram(detections, dynamic_expected)
+        results,
+        messages,
+        quantity_compliance,
+        position_compliance,
+        overall_compliance
+    )
 
 
 # ============================================================
@@ -445,7 +421,6 @@ def analyze_planogram(detections, expected_config=None):
 
 @app.route("/")
 def home():
-
     return render_template("index.html")
 
 
@@ -455,17 +430,30 @@ def home():
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
+
+    # --------------------------------------------------------
+    # CHECK BOTH UPLOADS
+    # --------------------------------------------------------
+
     if "planogram" not in request.files or "image" not in request.files:
-        return "Please upload both a planogram image and a shelf image", 400
+        return (
+            "Please upload both a planogram image and a shelf image",
+            400
+        )
 
     planogram_file = request.files["planogram"]
-    file = request.files["image"]
+    shelf_file = request.files["image"]
 
-    if planogram_file.filename == "" or file.filename == "":
+    if planogram_file.filename == "" or shelf_file.filename == "":
         return "Please select both images", 400
 
-        # Save uploaded planogram
-    planogram_filename = f"planogram_{uuid.uuid4().hex}.jpg"
+    # ========================================================
+    # SAVE AND ANALYZE PLANOGRAM
+    # ========================================================
+
+    planogram_filename = (
+        f"planogram_{uuid.uuid4().hex}.jpg"
+    )
 
     planogram_path = os.path.join(
         UPLOAD_FOLDER,
@@ -474,80 +462,149 @@ def analyze():
 
     planogram_file.save(planogram_path)
 
-    # Read uploaded planogram
     planogram_image = cv2.imread(planogram_path)
 
     if planogram_image is None:
         return "Unable to read uploaded planogram image", 400
 
-    # Check planogram resolution
-    planogram_height, planogram_width = planogram_image.shape[:2]
+    planogram_height, planogram_width = (
+        planogram_image.shape[:2]
+    )
 
-    if planogram_width < 500 or planogram_height < 350:
+    if (
+        planogram_width < MIN_IMAGE_WIDTH
+        or planogram_height < MIN_IMAGE_HEIGHT
+    ):
         return """
         <h2>Planogram image quality is too low</h2>
-        <p>Please upload a higher-resolution planogram image.</p>
-        <p>Minimum recommended resolution: 500 × 350 pixels.</p>
+        <p>
+            Please upload a higher-resolution planogram image
+            for accurate product detection.
+        </p>
+        <p>
+            Minimum recommended resolution: 500 × 350 pixels.
+        </p>
         """, 400
 
-    # Analyze uploaded planogram
-    planogram_detections = detect_products(planogram_image)
+    planogram_detections = detect_products(
+        planogram_image
+    )
+
+    print(
+        "=== PLANOGRAM DETECTIONS ===",
+        flush=True
+    )
+    print(
+        planogram_detections,
+        flush=True
+    )
 
     if not planogram_detections:
         return """
         <h2>No products detected in the planogram</h2>
-        <p>Please upload a clear planogram image containing the supported products.</p>
+        <p>
+            Please upload a clear planogram image containing
+            the supported products.
+        </p>
         """, 400
 
-    # Build dynamic reference from uploaded planogram
-    dynamic_expected = build_planogram_from_detections(
-        planogram_detections
+    dynamic_expected = (
+        build_planogram_from_detections(
+            planogram_detections
+        )
     )
 
-    print("=== PLANOGRAM DETECTIONS ===", flush=True)
-    print(planogram_detections, flush=True)
+    print(
+        "=== DYNAMIC EXPECTED ===",
+        flush=True
+    )
+    print(
+        dynamic_expected,
+        flush=True
+    )
 
-    print("=== DYNAMIC EXPECTED ===", flush=True)
-    print(dynamic_expected, flush=True)
+    # ========================================================
+    # SAVE AND ANALYZE SHELF IMAGE
+    # ========================================================
 
-    # Unique filename prevents old images from being cached
-    filename = f"{uuid.uuid4().hex}.jpg"
+    shelf_filename = (
+        f"{uuid.uuid4().hex}.jpg"
+    )
 
-    original_path = os.path.join(
+    shelf_path = os.path.join(
         UPLOAD_FOLDER,
-        filename
+        shelf_filename
     )
 
-    file.save(original_path)
+    shelf_file.save(shelf_path)
 
-    with open(original_path, "rb") as f:
-        image_hash = hashlib.sha256(f.read()).hexdigest()
+    # --------------------------------------------------------
+    # IMAGE HASH FOR DEBUGGING
+    # --------------------------------------------------------
 
-    print("=== IMAGE SHA256 ===", flush=True)
-    print(image_hash, flush=True)
+    with open(shelf_path, "rb") as f:
+        image_hash = hashlib.sha256(
+            f.read()
+        ).hexdigest()
 
-    image = cv2.imread(original_path)
+    print(
+        "=== IMAGE SHA256 ===",
+        flush=True
+    )
+    print(
+        image_hash,
+        flush=True
+    )
 
-    if image is None:
-        return "Unable to read uploaded image", 400
+    shelf_image = cv2.imread(
+        shelf_path
+    )
 
-    height, width = image.shape[:2]
+    if shelf_image is None:
+        return "Unable to read uploaded shelf image", 400
 
-    if width < 500 or height < 350:
+    shelf_height, shelf_width = (
+        shelf_image.shape[:2]
+    )
+
+    if (
+        shelf_width < MIN_IMAGE_WIDTH
+        or shelf_height < MIN_IMAGE_HEIGHT
+    ):
         return """
         <h2>Image quality is too low</h2>
-        <p>Please upload a higher-resolution shelf image for accurate product detection.</p>
-        <p>Minimum recommended resolution: 500 × 350 pixels.</p>
+        <p>
+            Please upload a higher-resolution shelf image
+            for accurate product detection.
+        </p>
+        <p>
+            Minimum recommended resolution: 500 × 350 pixels.
+        </p>
         """, 400
 
-    # Detection
-    detections = detect_products(image)
-    print("=== DETECTIONS DEBUG ===", flush=True)
-    print(detections, flush=True)
+    # --------------------------------------------------------
+    # SHELF DETECTION
+    # --------------------------------------------------------
 
-    # Draw bounding boxes
+    detections = detect_products(
+        shelf_image
+    )
+
+    print(
+        "=== SHELF DETECTIONS DEBUG ===",
+        flush=True
+    )
+    print(
+        detections,
+        flush=True
+    )
+
+    # --------------------------------------------------------
+    # DRAW SHELF DETECTIONS
+    # --------------------------------------------------------
+
     result_image = draw_detections(
-        image,
+        shelf_image,
         detections
     )
 
@@ -566,36 +623,50 @@ def analyze():
         [cv2.IMWRITE_JPEG_QUALITY, 85]
     )
 
-    # Planogram comparison
+    # ========================================================
+    # COMPARE SHELF AGAINST UPLOADED PLANOGRAM
+    # ========================================================
+
     (
         results,
         messages,
         quantity_compliance,
         position_compliance,
         overall_compliance
-    ) = analyze_planogram(detections)
+    ) = analyze_planogram(
+        detections,
+        dynamic_expected
+    )
+
+    # ========================================================
+    # RESULT PAGE
+    # ========================================================
 
     return render_template(
         "result.html",
 
-        original_image=
-            f"uploads/{filename}",
+        original_image=f"uploads/{shelf_filename}",
 
-        result_image=
-            f"uploads/{result_filename}",
+        result_image=f"uploads/{result_filename}",
 
         results=results,
 
         messages=messages,
 
-        quantity_compliance=
-            round(quantity_compliance, 2),
+        quantity_compliance=round(
+            quantity_compliance,
+            2
+        ),
 
-        position_compliance=
-            round(position_compliance, 2),
+        position_compliance=round(
+            position_compliance,
+            2
+        ),
 
-        overall_compliance=
-            round(overall_compliance, 2)
+        overall_compliance=round(
+            overall_compliance,
+            2
+        )
     )
 
 
@@ -604,7 +675,6 @@ def analyze():
 # ============================================================
 
 if __name__ == "__main__":
-
     port = int(
         os.environ.get(
             "PORT",
