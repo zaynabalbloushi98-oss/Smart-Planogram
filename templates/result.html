@@ -285,7 +285,65 @@
 
     </div>
 
+   <!-- ==============================
+     PLANOGRAM ANALYSIS
+     ============================== -->
 
+<div class="card">
+
+    <h2>Planogram Analysis</h2>
+
+    <div class="images">
+
+        <div class="image-box">
+
+            <h3>Uploaded Planogram</h3>
+
+            <img
+                src="{{ url_for(
+                    'static',
+                    filename=planogram_image
+                ) }}"
+            >
+
+        </div>
+
+        <div class="image-box">
+
+            <h3>Planogram Analysis Results</h3>
+
+            <p>
+                <strong>Image Resolution:</strong>
+                {{ planogram_width }} × {{ planogram_height }} pixels
+            </p>
+
+            <p>
+                <strong>Image Quality:</strong>
+                Suitable for Analysis
+            </p>
+
+            {% for product, data in planogram_counts.items() %}
+
+                <div class="number-box">
+
+                    <span>{{ data.display }}</span>
+
+                    <strong>{{ data.quantity }}</strong>
+
+                    <p>
+                        Average Detection Confidence:
+                        {{ data.average_confidence }}%
+                    </p>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
     <!-- ==============================
          SHELF IMAGES
          ============================== -->
