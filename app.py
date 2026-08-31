@@ -437,6 +437,8 @@ def analyze():
 
     # Detection
     detections = detect_products(image)
+    print("=== DETECTIONS DEBUG ===", flush=True)
+print(detections, flush=True)
 
     # Draw bounding boxes
     result_image = draw_detections(
