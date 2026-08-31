@@ -259,22 +259,67 @@ def draw_detections(image, detections):
         )
 
     return result
+# ============================================================
+# BUILD PLANOGRAM FROM UPLOADED IMAGE
+# ============================================================
 
+def build_planogram_from_detections(detections):
+
+    dynamic_expected = {}
+
+    display_names = {
+        "pepsi_zero_sugar": "Pepsi Zero Sugar",
+        "fanta_orange": "Fanta Orange",
+        "redbull": "Red Bull"
+    }
+
+    for product in CLASS_NAMES:
+
+        product_detections = [
+            d for d in detections
+            if d["product"] == product
+        ]
+
+        if not product_detections:
+            continue
+
+        quantity = len(product_detections)
+
+        positions = [
+            d["zone"] for d in product_detections
+        ]
+
+        # Use the most common detected zone as the expected position
+        expected_position = max(
+            set(positions),
+            key=positions.count
+        )
+
+        dynamic_expected[product] = {
+            "quantity": quantity,
+            "position": expected_position,
+            "display": display_names[product]
+        }
+
+    return dynamic_expected
 
 # ============================================================
 # PLANOGRAM COMPARISON
 # ============================================================
 
-def analyze_planogram(detections):
+   def analyze_planogram(detections, expected_config=None):
 
-    results = []
+   if expected_config is None:
+   expected_config = EXPECTED
 
-    correct_quantity_products = 0
-    correct_position_products = 0
+   results = []
 
-    messages = []
+   correct_quantity_products = 0
+   correct_position_products = 0
 
-    for product, expected_data in EXPECTED.items():
+   messages = []
+
+   for product, expected_data in expected_config.items():
 
         expected_qty = expected_data["quantity"]
         expected_position = expected_data["position"]
@@ -370,7 +415,7 @@ def analyze_planogram(detections):
     # COMPLIANCE
     # ========================================================
 
-    total_products = len(EXPECTED)
+    total_products = len(expected_config)
 
     quantity_compliance = (
         correct_quantity_products / total_products
