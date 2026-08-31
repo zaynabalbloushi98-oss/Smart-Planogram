@@ -1,315 +1,35 @@
-
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Smart Planogram Compliance System</title>
-
-    <style>
-
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            margin: 0;
-            padding: 30px;
-            color: #1f2937;
-        }
-
-        .container {
-            max-width: 1350px;
-            margin: auto;
-        }
-
-        h1 {
-            text-align: center;
-            color: #16324f;
-            margin-bottom: 30px;
-        }
-
-        h2 {
-            color: #16324f;
-        }
-
-        .card {
-            background: white;
-            padding: 25px;
-            margin-top: 22px;
-            border-radius: 14px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-        }
-
-        .planogram-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            align-items: start;
-        }
-
-        .planogram-box {
-            text-align: center;
-        }
-
-        .planogram-box h3 {
-            color: #16324f;
-            margin-bottom: 12px;
-        }
-
-        .planogram-box img {
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-            display: block;
-        }
-
-        .planogram-info {
-            background: #edf3f8;
-            margin-top: 20px;
-            padding: 18px;
-            border-radius: 10px;
-            text-align: center;
-            line-height: 1.7;
-        }
-
-        .configuration {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 15px;
-        }
-
-        .configuration-box {
-            background: white;
-            padding: 12px 18px;
-            border-radius: 8px;
-            min-width: 180px;
-        }
-
-        .configuration-box strong {
-            display: block;
-            color: #16324f;
-            margin-bottom: 5px;
-        }
-
-        .upload {
-            text-align: center;
-        }
-
-        .upload p {
-            color: #64748b;
-        }
-
-        input[type="file"] {
-            margin-top: 10px;
-        }
-
-        button {
-            padding: 13px 32px;
-            border: none;
-            border-radius: 8px;
-            background: #16324f;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #244f78;
-        }
-
-        @media (max-width: 800px) {
-
-            body {
-                padding: 12px;
-            }
-
-            .planogram-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-    </style>
-
-</head>
-
-
-<body>
-
-<div class="container">
-
-
-    <h1>
-        Smart Planogram Compliance System
-    </h1>
-
-
-    <!-- EXPECTED PLANOGRAM -->
-
-    <div class="card">
-
-        <h2>
-            Expected Visual Planogram
-        </h2>
-
-
-        <div class="planogram-grid">
-
-
-            <!-- FRONT IMAGE -->
-
-            <div class="planogram-box">
-
-                <h3>
-                    Front Shelf Layout
-                </h3>
-
-                <img
-                    src="{{ url_for(
-                        'static',
-                        filename='planograms/planogram_front.jpeg'
-                    ) }}"
-                    alt="Front Shelf Planogram"
-                >
-
-            </div>
-
-
-            <!-- DEPTH IMAGE -->
-
-            <div class="planogram-box">
-
-                <h3>
-                    Shelf Depth Layout
-                </h3>
-
-                <img
-                    src="{{ url_for(
-                        'static',
-                        filename='planograms/planogram_depth.jpeg'
-                    ) }}"
-                    alt="Shelf Depth Planogram"
-                >
-
-            </div>
-
-
-        </div>
-
-
-        <!-- PLANOGRAM DETAILS -->
-
-        <div class="planogram-info">
-
-            <strong>
-                Required Shelf Configuration
-            </strong>
-
-            <div class="configuration">
-
-
-                <div class="configuration-box">
-
-                    <strong>
-                        Pepsi Zero Sugar
-                    </strong>
-
-                    Required front quantity: 4
-
-                    <br>
-
-                    Position: Left
-
-                </div>
-
-
-                <div class="configuration-box">
-
-                    <strong>
-                        Fanta Orange
-                    </strong>
-
-                    Required front quantity: 4
-
-                    <br>
-
-                    Position: Center
-
-                </div>
-
-
-                <div class="configuration-box">
-
-                    <strong>
-                        Red Bull
-                    </strong>
-
-                    Required front quantity: 4
-
-                    <br>
-
-                    Position: Right
-
-                </div>
-
-
-            </div>
-
-
-            <br>
-
-            Each product has
-            <strong>4 visible front facings</strong>
-            with additional products placed behind them.
-
-        </div>
-
-
-    </div>
-
-
-    <!-- UPLOAD -->
-
-    <div class="card upload">
-
-        <h2>
-            Upload Current Shelf Image
-        </h2>
-
-        <p>
-            Upload a front-facing shelf image for quantity and position analysis.
-        </p>
-
-
-     <label for="planogram">Upload Planogram Image:</label>
-     <input type="file" id="planogram" name="planogram" accept="image/*" required>
-     <br><br>
-
-            <input
-                type="file"
-                name="image"
-                accept="image/*"
-                required
-            >
-
-            <br><br>
-
-            <button type="submit">
-                Analyze Shelf
-            </button>
-
-        </form>
-
-
-    </div>
-
-
-</div>
-
-</body>
-
-</html>
+<form action="/analyze" method="POST" enctype="multipart/form-data">
+
+    <label for="planogram">
+        <strong>Upload Planogram Image:</strong>
+    </label>
+
+    <input
+        type="file"
+        id="planogram"
+        name="planogram"
+        accept="image/*"
+        required
+    >
+
+    <br><br>
+
+    <label for="image">
+        <strong>Upload Current Shelf Image:</strong>
+    </label>
+
+    <input
+        type="file"
+        id="image"
+        name="image"
+        accept="image/*"
+        required
+    >
+
+    <br><br>
+
+    <button type="submit">
+        Analyze Shelf
+    </button>
+
+</form>
