@@ -431,7 +431,7 @@ def analyze():
     file.save(original_path)
 
     with open(original_path, "rb") as f:
-    image_hash = hashlib.sha256(f.read()).hexdigest()
+        image_hash = hashlib.sha256(f.read()).hexdigest()
 
     print("=== IMAGE SHA256 ===", flush=True)
     print(image_hash, flush=True)
@@ -439,16 +439,16 @@ def analyze():
     image = cv2.imread(original_path)
 
     if image is None:
-    return "Unable to read uploaded image", 400
+        return "Unable to read uploaded image", 400
 
     height, width = image.shape[:2]
 
     if width < 500 or height < 350:
-    return """
-    <h2>Image quality is too low</h2>
-    <p>Please upload a higher-resolution shelf image for accurate product detection.</p>
-    <p>Minimum recommended resolution: 500 × 350 pixels.</p>
-    """, 400
+        return """
+        <h2>Image quality is too low</h2>
+        <p>Please upload a higher-resolution shelf image for accurate product detection.</p>
+        <p>Minimum recommended resolution: 500 × 350 pixels.</p>
+        """, 400
 
     # Detection
     detections = detect_products(image)
