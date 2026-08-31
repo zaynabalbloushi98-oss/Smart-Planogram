@@ -430,12 +430,13 @@ def build_planogram_from_detections(detections):
     ) / 2
 
     return (
-        results,
-        messages,
-        quantity_compliance,
-        position_compliance,
-        overall_compliance
-    )
+(
+    results,
+    messages,
+    quantity_compliance,
+    position_compliance,
+    overall_compliance
+) = analyze_planogram(detections, dynamic_expected)
 
 
 # ============================================================
@@ -454,16 +455,60 @@ def home():
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
+    if "planogram" not in request.files or "image" not in request.files:
+        return "Please upload both a planogram image and a shelf image", 400
 
-    if "image" not in request.files:
-
-        return "No image uploaded", 400
-
+    planogram_file = request.files["planogram"]
     file = request.files["image"]
 
-    if file.filename == "":
+    if planogram_file.filename == "" or file.filename == "":
+        return "Please select both images", 400
 
-        return "No image selected", 400
+        # Save uploaded planogram
+    planogram_filename = f"planogram_{uuid.uuid4().hex}.jpg"
+
+    planogram_path = os.path.join(
+        UPLOAD_FOLDER,
+        planogram_filename
+    )
+
+    planogram_file.save(planogram_path)
+
+    # Read uploaded planogram
+    planogram_image = cv2.imread(planogram_path)
+
+    if planogram_image is None:
+        return "Unable to read uploaded planogram image", 400
+
+    # Check planogram resolution
+    planogram_height, planogram_width = planogram_image.shape[:2]
+
+    if planogram_width < 500 or planogram_height < 350:
+        return """
+        <h2>Planogram image quality is too low</h2>
+        <p>Please upload a higher-resolution planogram image.</p>
+        <p>Minimum recommended resolution: 500 × 350 pixels.</p>
+        """, 400
+
+    # Analyze uploaded planogram
+    planogram_detections = detect_products(planogram_image)
+
+    if not planogram_detections:
+        return """
+        <h2>No products detected in the planogram</h2>
+        <p>Please upload a clear planogram image containing the supported products.</p>
+        """, 400
+
+    # Build dynamic reference from uploaded planogram
+    dynamic_expected = build_planogram_from_detections(
+        planogram_detections
+    )
+
+    print("=== PLANOGRAM DETECTIONS ===", flush=True)
+    print(planogram_detections, flush=True)
+
+    print("=== DYNAMIC EXPECTED ===", flush=True)
+    print(dynamic_expected, flush=True)
 
     # Unique filename prevents old images from being cached
     filename = f"{uuid.uuid4().hex}.jpg"
