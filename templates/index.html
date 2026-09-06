@@ -12,15 +12,15 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            background-color: #f4f7fb;
+            background-color: #f5f5f5;
         }
 
-        /* Top Header */
+        /* Top Title */
         header {
             text-align: center;
             padding: 30px;
-            background-color: #2c5f8a;
-            color: white;
+            background-color: white;
+            border-bottom: 1px solid #ddd;
         }
 
         header h1 {
@@ -29,6 +29,7 @@
         }
 
         header p {
+            color: #666;
             margin-top: 8px;
         }
 
@@ -45,29 +46,20 @@
             background-color: white;
             padding: 40px;
             width: 500px;
-            border-radius: 12px;
+            border-radius: 10px;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        .upload-box h2 {
-            color: #2c5f8a;
-        }
-
-        /* Upload Sections */
         .upload-section {
             margin: 25px 0;
-            padding: 20px;
-            background-color: #f4f7fb;
-            border-radius: 8px;
             text-align: left;
         }
 
         .upload-section label {
             display: block;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             font-size: 16px;
-            color: #333;
         }
 
         input[type="file"] {
@@ -76,31 +68,33 @@
 
         /* Analyze Button */
         button {
-            margin-top: 15px;
-            padding: 13px 40px;
+            margin-top: 20px;
+            padding: 12px 35px;
             font-size: 16px;
-            background-color: #2c5f8a;
-            color: white;
             border: none;
             border-radius: 6px;
             cursor: pointer;
         }
 
         button:hover {
-            background-color: #234b6d;
+            opacity: 0.8;
         }
 
     </style>
 
 </head>
 
+
 <body>
 
+    <!-- Title -->
     <header>
         <h1>Smart Planogram</h1>
         <p>Upload images to analyze shelf compliance</p>
     </header>
 
+
+    <!-- Upload Section -->
     <div class="container">
 
         <div class="upload-box">
@@ -109,10 +103,11 @@
 
             <form action="/analyze" method="POST" enctype="multipart/form-data">
 
+                <!-- Planogram Upload -->
                 <div class="upload-section">
 
                     <label for="planogram">
-                        <strong>Expected Planogram Image</strong>
+                        <strong>Upload Expected Planogram Image</strong>
                     </label>
 
                     <input
@@ -126,10 +121,11 @@
                 </div>
 
 
+                <!-- Shelf Upload -->
                 <div class="upload-section">
 
                     <label for="image">
-                        <strong>Current Shelf Image</strong>
+                        <strong>Upload Current Shelf Image</strong>
                     </label>
 
                     <input
@@ -143,6 +139,7 @@
                 </div>
 
 
+                <!-- Button -->
                 <button type="submit">
                     Analyze Shelf
                 </button>
