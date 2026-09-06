@@ -12,90 +12,82 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            background: #f3f6f9;
-            color: #333;
+            background-color: #f4f7fb;
         }
 
-        /* Header */
+        /* Top Header */
         header {
-            background: #345c7f;
-            color: white;
             text-align: center;
-            padding: 25px;
+            padding: 30px;
+            background-color: #2c5f8a;
+            color: white;
         }
 
         header h1 {
             margin: 0;
+            font-size: 32px;
         }
 
         header p {
-            margin: 8px 0 0;
+            margin-top: 8px;
         }
 
-        /* Main area */
+        /* Main Container */
         .container {
-            max-width: 900px;
-            margin: 60px auto;
-            text-align: center;
-        }
-
-        .container h2 {
-            color: #345c7f;
-            margin-bottom: 35px;
-        }
-
-        /* Upload options */
-        .upload-options {
             display: flex;
             justify-content: center;
-            gap: 25px;
-            margin-bottom: 30px;
+            align-items: center;
+            min-height: 70vh;
         }
 
-        .upload-card {
-            background: white;
-            width: 320px;
-            padding: 30px 20px;
+        /* Upload Box */
+        .upload-box {
+            background-color: white;
+            padding: 40px;
+            width: 500px;
             border-radius: 12px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
-        .upload-card h3 {
-            color: #345c7f;
-            margin-top: 0;
+        .upload-box h2 {
+            color: #2c5f8a;
         }
 
-        .upload-card p {
-            color: #777;
-            font-size: 14px;
+        /* Upload Sections */
+        .upload-section {
+            margin: 25px 0;
+            padding: 20px;
+            background-color: #f4f7fb;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .upload-section label {
+            display: block;
+            margin-bottom: 12px;
+            font-size: 16px;
+            color: #333;
         }
 
         input[type="file"] {
-            margin-top: 15px;
             width: 100%;
         }
 
-        /* Button */
+        /* Analyze Button */
         button {
-            background: #345c7f;
+            margin-top: 15px;
+            padding: 13px 40px;
+            font-size: 16px;
+            background-color: #2c5f8a;
             color: white;
             border: none;
-            padding: 14px 45px;
-            font-size: 16px;
-            border-radius: 7px;
+            border-radius: 6px;
             cursor: pointer;
         }
 
         button:hover {
-            background: #274865;
-        }
-
-        /* Mobile */
-        @media (max-width: 700px) {
-            .upload-options {
-                flex-direction: column;
-                align-items: center;
-            }
+            background-color: #234b6d;
         }
 
     </style>
@@ -104,65 +96,63 @@
 
 <body>
 
-<header>
-    <h1>Smart Planogram</h1>
-    <p>Analyze your shelf and check planogram compliance</p>
-</header>
+    <header>
+        <h1>Smart Planogram</h1>
+        <p>Upload images to analyze shelf compliance</p>
+    </header>
+
+    <div class="container">
+
+        <div class="upload-box">
+
+            <h2>Upload Images</h2>
+
+            <form action="/analyze" method="POST" enctype="multipart/form-data">
+
+                <div class="upload-section">
+
+                    <label for="planogram">
+                        <strong>Expected Planogram Image</strong>
+                    </label>
+
+                    <input
+                        type="file"
+                        id="planogram"
+                        name="planogram"
+                        accept="image/*"
+                        required
+                    >
+
+                </div>
 
 
-<div class="container">
+                <div class="upload-section">
 
-    <h2>Upload Images</h2>
+                    <label for="image">
+                        <strong>Current Shelf Image</strong>
+                    </label>
 
-    <form action="/analyze" method="POST" enctype="multipart/form-data">
+                    <input
+                        type="file"
+                        id="image"
+                        name="image"
+                        accept="image/*"
+                        required
+                    >
 
-        <div class="upload-options">
-
-            <!-- Planogram -->
-            <div class="upload-card">
-
-                <h3>Expected Planogram</h3>
-
-                <p>Upload the reference shelf layout.</p>
-
-                <input
-                    type="file"
-                    id="planogram"
-                    name="planogram"
-                    accept="image/*"
-                    required
-                >
-
-            </div>
+                </div>
 
 
-            <!-- Current Shelf -->
-            <div class="upload-card">
+                <button type="submit">
+                    Analyze Shelf
+                </button>
 
-                <h3>Current Shelf Image</h3>
-
-                <p>Upload the current shelf image for analysis.</p>
-
-                <input
-                    type="file"
-                    id="image"
-                    name="image"
-                    accept="image/*"
-                    required
-                >
-
-            </div>
+            </form>
 
         </div>
 
-
-        <button type="submit">
-            Analyze Shelf
-        </button>
-
-    </form>
-
-</div>
+    </div>
 
 </body>
+
 </html>
