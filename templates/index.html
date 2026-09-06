@@ -1,35 +1,168 @@
-<form action="/analyze" method="POST" enctype="multipart/form-data">
+<!DOCTYPE html>
+<html lang="en">
 
-    <label for="planogram">
-        <strong>Upload Planogram Image:</strong>
-    </label>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <input
-        type="file"
-        id="planogram"
-        name="planogram"
-        accept="image/*"
-        required
-    >
+    <title>Smart Planogram</title>
 
-    <br><br>
+    <style>
 
-    <label for="image">
-        <strong>Upload Current Shelf Image:</strong>
-    </label>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f3f6f9;
+            color: #333;
+        }
 
-    <input
-        type="file"
-        id="image"
-        name="image"
-        accept="image/*"
-        required
-    >
+        /* Header */
+        header {
+            background: #345c7f;
+            color: white;
+            text-align: center;
+            padding: 25px;
+        }
 
-    <br><br>
+        header h1 {
+            margin: 0;
+        }
 
-    <button type="submit">
-        Analyze Shelf
-    </button>
+        header p {
+            margin: 8px 0 0;
+        }
 
-</form>
+        /* Main area */
+        .container {
+            max-width: 900px;
+            margin: 60px auto;
+            text-align: center;
+        }
+
+        .container h2 {
+            color: #345c7f;
+            margin-bottom: 35px;
+        }
+
+        /* Upload options */
+        .upload-options {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .upload-card {
+            background: white;
+            width: 320px;
+            padding: 30px 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .upload-card h3 {
+            color: #345c7f;
+            margin-top: 0;
+        }
+
+        .upload-card p {
+            color: #777;
+            font-size: 14px;
+        }
+
+        input[type="file"] {
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        /* Button */
+        button {
+            background: #345c7f;
+            color: white;
+            border: none;
+            padding: 14px 45px;
+            font-size: 16px;
+            border-radius: 7px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #274865;
+        }
+
+        /* Mobile */
+        @media (max-width: 700px) {
+            .upload-options {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header>
+    <h1>Smart Planogram</h1>
+    <p>Analyze your shelf and check planogram compliance</p>
+</header>
+
+
+<div class="container">
+
+    <h2>Upload Images</h2>
+
+    <form action="/analyze" method="POST" enctype="multipart/form-data">
+
+        <div class="upload-options">
+
+            <!-- Planogram -->
+            <div class="upload-card">
+
+                <h3>Expected Planogram</h3>
+
+                <p>Upload the reference shelf layout.</p>
+
+                <input
+                    type="file"
+                    id="planogram"
+                    name="planogram"
+                    accept="image/*"
+                    required
+                >
+
+            </div>
+
+
+            <!-- Current Shelf -->
+            <div class="upload-card">
+
+                <h3>Current Shelf Image</h3>
+
+                <p>Upload the current shelf image for analysis.</p>
+
+                <input
+                    type="file"
+                    id="image"
+                    name="image"
+                    accept="image/*"
+                    required
+                >
+
+            </div>
+
+        </div>
+
+
+        <button type="submit">
+            Analyze Shelf
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>
